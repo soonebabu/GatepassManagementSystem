@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container mt-4" style="margin-bottom:200px;">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-body" style="background-color: #E0ECF3;">
+                    <h2 class="card-title mb-4 text-center text-uppercase font-weight-bold text-primary">Export Data</h2>
+                    <form id="export-form" action="{% url 'export_to_excel' %}" method="GET">
+                        <!-- Filter Option Select Field -->
+                        <div class="mb-3 row">
+                            <label for="filter-option" class="col-sm-3 col-form-label">Filter Option:</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="filter-option" name="filter_option">
+                                    <option value="date">Pass Issued Date</option>
+                                    <option value="date_of_entry">Entered Date</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Start Date Input Field -->
+                        <div class="mb-3 row">
+                            <label for="start-date" class="col-sm-3 col-form-label">Start Date:</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control nepali-datepicker" id="start-date" name="start_date" placeholder="Select start date">
+                            </div>
+                        </div>
+
+                        <!-- End Date Input Field -->
+                        <div class="mb-3 row">
+                            <label for="end-date" class="col-sm-3 col-form-label">End Date:</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control nepali-datepicker" id="end-date" name="end_date" placeholder="Select end date">
+                            </div>
+                        </div>
+
+                        {% if user_group_name == 'SUPERADMIN' or user_group_name == 'GATE ADMIN' %}
+                        <div class="mb-3 row">
+                            <label for="visited-quater" class="col-sm-3 col-form-label">Visited Quater:</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="visited-quater" name="visited_quater">
+                                    <option value="all">All</option>
+                                    {% for group in all_groups %}
+                                        {% if group.name != 'SUPERADMIN' and group.name != 'GATE ADMIN' %}
+                                            <option value="{{ group.name }}">{{ group.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Submit Button -->
+                        <div class="mb-3 row">
+                            <div class="col-sm-9 offset-sm-3">
+                                <button id="export-button" type="submit" class="btn btn-primary btn-sm">
+                                    <img src="{% load static %}{% get_media_prefix %}app_logos/excel.png" alt="Export Icon" class="button-icon">
+                                    Export to Excel
+                                </button>
+                            </div>
+                        </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        const exportButton = document.getElementById('export-button');
+
+        startDateInput.addEventListener('input', toggleExportButton);
+        endDateInput.addEventListener('input', toggleExportButton);
+
+        function toggleExportButton() {
+            if (startDateInput.value && endDateInput.value) {
+                exportButton.removeAttribute('disabled');
+            } else {
+                exportButton.setAttribute('disabled', 'disabled');
+            }
+        }
+    });
+</script>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+       <!-- Pie Chart Section -->
+       {% if user_group_name == 'SUPERADMIN' %}
+       <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-4 text-center text-uppercase font-weight-bold text-primary">Pie Chart</h2>
+                    <div id="pie-chart-container" class="text-center">
+
+                        {% if entered_data %}
+                        <div class="card">
+                            <div class="card-header">
+                                Users Entered by Office
+                            </div>
+                            <div class="card-body">
+                                <!-- Adjust the width and height of the canvas for the pie chart -->
+                                <canvas id="enteredPieChart" width="300" height="300" class="chart"></canvas>
+                                <script>
+                                    // Use Chart.js to create pie charts
+                                    var enteredData = {{ entered_data|safe }};
+                                    var officeLabels = enteredData.map(entry => entry.office);
+                                    var enteredCounts = enteredData.map(entry => entry.count);
+                      
+                                    // Create pie chart for users entered by office
+                                    var enteredPieCtx = document.getElementById('enteredPieChart').getContext('2d');
+                                    var enteredPieChart = new Chart(enteredPieCtx, {
+                                        type: 'pie',
+                                        data: {
+                                            labels: officeLabels,
+                                            datasets: [{
+                                                data: enteredCounts,
+                                                backgroundColor: [
+                                                    'rgba(255, 99, 132, 0.8)',
+                                                    'rgba(54, 162, 235, 0.8)',
+                                                    'rgba(255, 206, 86, 0.8)',
+                                                    'rgba(75, 192, 192, 0.8)',
+                                                    'rgba(153, 102, 255, 0.8)',
+                                                    'rgba(255, 159, 64, 0.8)',
+                                                ],
+                                            }]
+                                        },
+                                        options: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top',
+                                                labels: {
+                                                    font: {
+                                                        size: 12
+                                                    }
+                                                }
+                                            },
+                                            // Explicitly set width and height
+                                            responsive: false,
+                                            maintainAspectRatio: false,
+                                            aspectRatio: 1
+                                        }
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <!-- Pie chart will be displayed here -->
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Nepali Datepicker
+        $('.nepali-datepicker').nepaliDatePicker({
+            dateFormat: 'YYYY-MM-DD',  // Set the desired date format
+            closeOnDateSelect: true,    // Close the datepicker when a date is selected
+            disableAfterToday: true,     // Disable dates after today
+            disableBeforeToday: false,   // Allow selection of past dates
+            onChange: function(selectedDate) {
+                console.log(selectedDate);  // Log selected date to console
+            }
+        });
+    });
+</script>
+{% endblock %}

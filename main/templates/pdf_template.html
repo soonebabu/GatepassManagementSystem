@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="margin-bottom:200px;">
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card for Gate Pass Details -->
+            <div class="card shadow-lg border-0" id="print-section">
+                <div class="card-header bg-primary text-white position-relative">
+                    <h3 class="text-center mb-0 text-uppercase font-weight-bold">Gate Pass - {{ item.name }}</h3>
+                    <!-- Download Button (Top-right Corner) -->
+                    <form action="{% url 'download_pdf' item.id %}" method="get" style="position:absolute; right: 10px; top: 10px; display:inline;">
+                        <button type="submit" class="btn btn-primary p-0" style="border: none; background: transparent;">
+                            <i class="fas fa-download" style="font-size: 20px;"></i> <!-- Only icon with no text -->
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="card-body bg-light">
+                    <!-- Full Details Table for Download -->
+                    <table class="table table-bordered" id="download-table">
+                        <tr>
+                            <th>Pass Issued By / पास जारी गर्ने</th>
+                            <td>{{ item.group }}</td>
+                        </tr>
+                        <tr>
+                            <th>Quater to Visit / भ्रमण गर्ने आवास</th>
+                            <td>{{ item.assigned_office }}</td>
+                        </tr>
+                        <tr>
+                            <th>Name / नाम</th>
+                            <td>{{ item.name }}</td>
+                        </tr>
+                        {% if item.additional_people_names %}
+                        <tr>
+                            <th>Additional People No / अतिरिक्त व्यक्ति संख्या</th>
+                            <td>{{ item.num_of_add_people }}</td>
+                        </tr>
+                        <tr>
+                            <th>Additional People / अतिरिक्त व्यक्ति</th>
+                            <td>{{ item.additional_people_names }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Address / ठेगाना</th>
+                            <td>{{ item.province }}/{{ item.district }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date / मिति</th>
+                            <td>{{ item.date }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone Number / फोन</th>
+                            <td>{{ item.id_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>Purpose / उद्देश्य</th>
+                            <td>
+                                {% if item.other_purpose %}
+                                    {{ item.other_purpose }}
+                                {% else %}
+                                    {{ item.purpose }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Vehicle Number / सवारी साधन</th>
+                            <td>
+                                {% if item.has_vehicle %}
+                                    {{ item.vehicle_number }}
+                                {% else %}
+                                    सवारी साधन छैन
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Status / स्थिति</th>
+                            <td>{{ item.current_status }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date of Entry / प्रवेश मिति</th>
+                            <td>
+                                {% if item.date_of_entry %}
+                                    {{ item.date_of_entry }}
+                                {% else %}
+                                    छैन
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Date of Exit / बाहिरिएको मिति</th>
+                            <td>
+                                {% if item.date_of_exit %}
+                                    {{ item.date_of_exit }}
+                                {% else %}
+                                    छैन
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Print Table (Nepali Only) -->
+                    <div id="print-table" style="display:none;">
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>नाम</strong></p>
+                                <p>{{ item.name }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>ठेगाना</strong></p>
+                                <p>{{ item.province }}/{{ item.district }}</p>
+                            </div>
+                            
+                        </div>
+                    
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>मिति</strong></p>
+                                <p>{{ item.date }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>फोन</strong></p>
+                                <p>{{ item.id_number }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>उद्देश्य</strong></p>
+                                <p>
+                                    {% if item.other_purpose %}
+                                        {{ item.other_purpose }}
+                                    {% else %}
+                                        {{ item.purpose }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>सवारी साधन</strong></p>
+                                <p>
+                                    {% if item.has_vehicle %}
+                                        {{ item.vehicle_number }}
+                                    {% else %}
+                                        सवारी साधन छैन
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>पास जारी गर्ने</strong></p>
+                                <p>{{ item.group }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>भ्रमण गर्ने आवास</strong></p>
+                                <p>{{ item.assigned_office }}</p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary me-3" onclick="printSpecificSection()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Script -->
+<script>
+    function printSpecificSection() {
+        // Hide the full download table and show the print table temporarily
+        document.getElementById('download-table').style.display = 'none';
+        document.getElementById('print-table').style.display = 'block';
+        window.print();
+        // Revert back after printing
+        document.getElementById('download-table').style.display = 'block';
+        document.getElementById('print-table').style.display = 'none';
+    }
+</script>
+
+<!-- Print-Specific Styles -->
+<style>
+    @media print {
+        /* Hide the navbar */
+        .navbar, .nav-item, .nav-link {
+            display: none !important;
+        }
+        
+        /* Hide Buttons */
+        .btn {
+            display: none !important;
+        }
+
+        /* Show the print table */
+        #print-table {
+            display: block !important;
+        }
+
+        /* Hide the download table */
+        #download-table {
+            display: none !important;
+        }
+
+        /* Print specific styles */
+        body {
+            font-size: 10px;
+            line-height: 1.2;
+        }
+
+        .row {
+            margin-bottom: 3px; /* Reduce space between rows */
+        }
+
+        .col-6 {
+            margin-bottom: 2px; /* Reduce space between columns */
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+        h3 {
+            font-size: 12px; /* Adjust this value as needed */
+        }
+    }
+</style>
+
+<!-- Bootstrap & Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="margin-bottom:200px;">
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card for Gate Pass Details -->
+            <div class="card shadow-lg border-0" id="print-section">
+                <div class="card-header bg-primary text-white position-relative">
+                    <h2 class="text-center mb-0 text-uppercase font-weight-bold">Gate Pass Details of {{ item.name }}</h2>
+                </div>
+                 
+                <div class="card-body bg-light">
+                    <!-- PDF Details Table -->
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Pass Issued By / पास जारी गर्ने</th>
+                            <td>{{ item.group }}</td>
+                        </tr>
+                        <tr>
+                            <th>Quater to Visit / भ्रमण गर्ने आवास</th>
+                            <td>{{ item.assigned_office }}</td>
+                        </tr>
+                        <tr>
+                            <th>Name / नाम</th>
+                            <td>{{ item.name }}</td>
+                        </tr>
+                        {% if item.additional_people_names %}
+                        <tr>
+                            <th>Additional People No / अतिरिक्त व्यक्ति संख्या</th>
+                            <td>{{ item.num_of_add_people }}</td>
+                        </tr>
+                        <tr>
+                            <th>Additional People / अतिरिक्त व्यक्ति</th>
+                            <td>{{ item.additional_people_names }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Province / प्रदेश</th>
+                            <td>{{ item.province }}</td>
+                        </tr>
+                        <tr>
+                            <th>District / जिल्ला</th>
+                            <td>{{ item.district }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date / मिति</th>
+                            <td>{{ item.date }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone Number / फोन</th>
+                            <td>{{ item.id_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>Purpose / उद्देश्य</th>
+                            <td>
+                                {% if item.other_purpose %}
+                                    {{ item.other_purpose }}
+                                {% else %}
+                                    {{ item.purpose }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Vehicle Number / सवारी साधन</th>
+                            <td>
+                                {% if item.has_vehicle %}
+                                    {{ item.vehicle_number }}
+                                {% else %}
+                                    सवारी साधन छैन
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Status / स्थिति</th>
+                            <td>{{ item.current_status }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date of Entry / प्रवेश मिति</th>
+                            <td>
+                                {% if item.date_of_entry %}
+                                    {{ item.date_of_entry }}
+                                {% else %}
+                                    छैन
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Date of Exit / बाहिरिएको मिति</th>
+                            <td>
+                                {% if item.date_of_exit %}
+                                    {{ item.date_of_exit }}
+                                {% else %}
+                                    छैन
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary me-3" onclick="printSpecificSection()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Script -->
+
+<script>
+    function printSpecificSection() {
+        const printContent = document.getElementById('print-section').innerHTML;
+        const originalContent = document.body.innerHTML;
+
+        // Add the print style dynamically for the thermal printer
+        const style = `
+            <style>
+                @media print {
+                    body {
+                        margin: 0;
+                        font-size: 10px;
+                        line-height: 1.2;
+                        color: #000;
+                    }
+                    .container {
+                        width: 100%;
+                        margin: 0 auto;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+                    table, th, td {
+                        border: 1px solid #000;
+                        padding: 4px;
+                    }
+                    .card {
+                        border: none;
+                        box-shadow: none;
+                    }
+                    h2 {
+                        font-size: 14px;
+                        margin: 0 0 8px;
+                    }
+                }
+            </style>
+        `;
+
+        document.body.innerHTML = style + printContent;
+        window.print();
+        document.body.innerHTML = originalContent; // Restore original content
+        window.location.reload(); // Reload to reapply event listeners
+    }
+</script>
+
+
+<!-- Bootstrap & Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+<!-- Bootstrap & Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %} {% endcomment %}
+
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block content %}
+    <style>
+        /* Basic styles for the page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .print-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .print-button:hover {
+            background: #0056b3;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                border: none;
+            }
+
+            .print-button {
+                display: none;
+            }
+        }
+    </style>
+
+    <div class="container">
+      <div class="container mt-4" style="margin-bottom:200px;">
+        <div class="row justify-content-center" style="font-weight: bold;">
+          <div class="col-md-8" style="background-color: #f5f5f5;">
+            <div class="card shadow mb-4" style="background-color: #E0ECF3;">
+                <div class="card-body" style="padding: 30px;"> <!-- Increased padding for a taller card -->
+                    <h2 class="card-title mb-4 text-center text-uppercase font-weight-bold text-primary">Gate Pass Details of {{ item.name }}</h2>
+              </div>
+            </div>
+            <!-- PDF Details Table -->
+            <table>
+              <tr>
+                <th style="width: 70%;">Pass Issued By / पास जारी गर्ने</th>
+                <td style="width: 50%;">{{ item.group }}</td>
+              </tr>
+              <tr>
+                <th style="width: 70%;">Quater to Visit / भ्रमण गर्ने आवास</th>
+                <td style="width: 50%;">{{ item.assigned_office }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Name / नाम</th>
+                <td style="width: 50%;">{{ item.name }}</td>
+              </tr>
+              {% if item.additional_people_names %}
+              <tr>
+                <th style="width: 80%;">Additional People No/ अतिरिक्त व्यक्ति संख्या</th>
+                <td style="width: 50%;">{{ item.num_of_add_people }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Additional People / अतिरिक्त व्यक्ति</th>
+                <td style="width: 50%;">{{ item.additional_people_names }}</td>
+              </tr>
+              {% endif %}
+              <tr>
+                <th style="width: 50%;">Province / प्रदेश</th>
+                <td style="width: 50%;">{{ item.province }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">District / जिल्ला</th>
+                <td style="width: 50%;">{{ item.district }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Date / मिति</th>
+                <td style="width: 50%;">{{ item.date }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Phone Number / फोन</th>
+                <td style="width: 50%;">{{ item.id_number }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Purpose / उद्देश्य</th>
+                <td style="width: 50%;">{% if item.other_purpose %}
+                  {{ item.other_purpose }}
+              {% else %}
+                  {{ item.purpose }}
+              {% endif %}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Vehicle Number / सवारी साधन</th>
+                <td style="width: 50%;">
+                  {% if item.has_vehicle %}
+                      {{ item.vehicle_number }}
+                  {% else %}
+                  सवारी साधन छैन
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Status / स्थिति</th>
+                <td style="width: 50%;">{{ item.current_status }}</td>
+              </tr>
+              <tr>
+                <th style="width: 50%;">Date of Entry / प्रवेश मिति</th>
+                <td style="width: 50%;">
+                  {% if item.date_of_entry %}
+                      {{ item.date_of_entry }}
+                  {% else %}
+                  छैन
+                  {% endif %}
+                </td>
+                <tr>
+                <th style="width: 50%;">Date of Exit / बाहिरिएको मिति</th>
+                <td style="width: 50%;">
+                  {% if item.date_of_exit %}
+                      {{ item.date_of_exit }}
+                  {% else %}
+                  छैन
+                  {% endif %}
+                </td>
+              </tr>
+            </table>
+            <!-- Download PDF Button -->
+            <div style="margin-top: 20px;">
+              <div class="text-center mt-4">
+                <form action="{% url 'download_pdf' item.id %}" method="get">
+                  <button class="print-button" type="submit" class="btn btn-secondary">
+                    Download
+                  </button>
+                  <button class="print-button" onclick="printPage()">Print</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        
+    </div>
+
+    <script>
+        function printPage() {
+            // Trigger the browser's print dialog
+            window.print();
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    {% endblock %} {% endcomment %}

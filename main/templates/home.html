@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+
+<!-- Main Start -->
+    <main style="margin-bottom:200px;">
+    	<!-- banner Start -->
+<div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      {% for image_number in "23" %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+              <img src="{% load static %}{% get_media_prefix %}banners/image{{ image_number }}.jpg" class="d-block w-100" alt="Slide {{ image_number }}">
+            </div>
+        {% endfor %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls"
+        data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls"
+        data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+<!-- End Banner -->
+
+<!-- Additional Styles to Ensure Same Image Size -->
+<style>
+    #carouselExampleControls img {
+        object-fit: cover;
+        height: 600px; /* Adjust the height as needed */
+    }
+</style>
+
+<!-- JavaScript to Enable Auto-Sliding -->
+<script>
+    $(document).ready(function () {
+        $('#carouselExampleControls').carousel({
+            interval: 1000 // Adjust the interval (in milliseconds) for auto-sliding
+        });
+    });
+</script>
+
+<!-- Apply for Pass Container -->
+{% comment %} <section class="container my-4 apply-pass-container">
+  <div class="row">
+      <div class="col-md-6 offset-md-3 text-center">
+          <h2 class="section-heading mb-4">Apply for Pass</h2>
+          <h4 class="section-description">Apply for your pass and streamline the process of entering Minister's Quarter.</h4>
+
+          <!-- Use an Eye-catching Image for Apply Now -->
+          <a href="{% url 'form_view' %}" class="btn btn-primary">
+              <img src="{% load static %}{% get_media_prefix %}app_logos/applynow.gif"  alt="Apply Now" class="apply-now-image">
+          </a>
+      </div>
+  </div>
+</section> {% endcomment %}
+
+<section class="container my-4 apply-pass-container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            <div class="card bg-light border-primary">
+                <div class="card-body" style="background-color: #ADD8E6;"> <!-- Light blue color -->
+                    <h2 class="card-title mb-4">Apply for Pass</h2>
+                </div>
+            </div>
+            <!-- Apply Now Card -->
+            <div class="card border-primary">
+                <div class="card-body">
+                    <i class="fas fa-id-card fa-4x text-primary mb-3"></i>
+                    {% comment %} <h3 class="card-title">Apply Now</h3> {% endcomment %}
+                    <p class="card-text" style="font-size: 20px;">Please click Apply Pass button to create a new pass.</p>
+                    <a href="{% url 'form_view' %}" class="btn btn-primary" style="font-size: 20px;">Apply Pass</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+<!-- Services Container -->
+<section class="container my-4">
+    <div class="row">
+        {% for service in services %}
+        <div class="col-md-4">
+            <div class="card">
+                <img src="{{ service.img.url }}" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <h3 class="card-title">{{ service.title }}</h3>
+                    <p class="card-text">{{ service.detail }}</p>
+                    <a href="#" class="btn btn-primary">Read More</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+<!-- End -->
+
+
+    
+
+    <!-- Users Entered by Office Pie Chart -->
+
+    </main>
+
+<!-- LightBox css -->
+<link rel="stylesheet" type="text/css" href="{% static 'lightbox2-2.11.3/dist/css/lightbox.min.css' %}" />
+<!-- LightBox Js -->
+<script type="text/javascript" src="{% static 'lightbox2-2.11.3/dist/js/lightbox.min.js' %}"></script>
+
+{% endblock %}

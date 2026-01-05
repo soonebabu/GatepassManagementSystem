@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5" style="margin-bottom:200px;">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-4 shadow-lg">
+                <div class="card-header" style="background-color: #5bc0de;">
+                    <div class="card-body text-center">
+                        <h2 class="card-title text-white">ADD GROUP</h2>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;"></div>
+
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group row">
+                            <label for="id_name" class="col-sm-3 col-form-label text-md-right font-weight-bold">Group Name:</label>
+                            <div class="col-sm-9">
+                                {{ form.name|as_crispy_field }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </form>
+                   
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'group_list' %}" class="btn btn-info mx-2">Go to Group List</a>
+
+                <a href="{% url 'signup' %}" class="btn btn-info mx-2">Create User</a>
+                <a href="{% url 'update_user_profile' %}" class="btn btn-info mx-2">Update Profile</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

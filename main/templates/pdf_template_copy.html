@@ -1,0 +1,106 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <title>Details PDF</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans Devanagari', Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h3>Gate Pass Details of {{ item.name }}</h3>
+    <table>
+        <tr>
+            <th>Pass Issued By / पास जारी गर्ने</th>
+            <td>{{ item.group }}</td>
+        </tr>
+        <tr>
+            <th>Quater to Visit / भ्रमण गर्ने आवास</th>
+            <td>{{ item.assigned_office }}</td>
+        </tr>
+        <tr>
+            <th>Name / नाम</th>
+            <td>{{ item.name }}</td>
+        </tr>
+        {% if item.additional_people_names %}
+        <tr>
+            <th>Additional People No / अतिरिक्त व्यक्ति संख्या</th>
+            <td>{{ item.num_of_add_people }}</td>
+        </tr>
+        <tr>
+            <th>Additional People / अतिरिक्त व्यक्ति</th>
+            <td>{{ item.additional_people_names }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Province / प्रदेश</th>
+            <td>{{ item.province }}</td>
+        </tr>
+        <tr>
+            <th>District / जिल्ला</th>
+            <td>{{ item.district }}</td>
+        </tr>
+        <tr>
+            <th>Date / मिति</th>
+            <td>{{ item.date }}</td>
+        </tr>
+        <tr>
+            <th>Phone No / फोन</th>
+            <td>{{ item.id_number }}</td>
+        </tr>
+        <tr>
+            <th>Visiting Purpose / उद्देश्य</th>
+            <td>{% if item.other_purpose %}
+                {{ item.other_purpose }}
+            {% else %}
+                {{ item.purpose }}
+            {% endif %}
+        </td>
+        </tr>
+        <tr>
+            <th>Vehicle No / सवारी साधन</th>
+            <td>
+                {% if item.has_vehicle %}
+                    {{ item.vehicle_number }}
+                {% else %}
+                    सवारी साधन छैन
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Status / स्थिति</th>
+            <td>{{ item.current_status }}</td>
+        </tr>
+        <tr>
+            <th>Date of Entry / प्रवेश मिति</th>
+            <td>
+                {% if item.date_of_entry %}
+                    {{ item.date_of_entry }}
+                {% else %}
+                    छैन
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

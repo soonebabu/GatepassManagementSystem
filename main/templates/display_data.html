@@ -1,0 +1,1183 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block content %}
+<div class="container text-center mt-4" style="margin-bottom:200px;">
+  <div class="card shadow mb-4" style="background-color: #eaf6fd;">
+    <div class="card-body">
+      <h2 class="card-title mb-4 text-center text-uppercase font-weight-bold text-primary">Pass Details</h2>
+      
+      <!-- Your pass details content goes here -->
+  
+    </div>
+  </div>
+  
+  
+  
+  <div class="input-group mb-3 search-input-group">
+    <input type="text" id="searchInput" class="form-control search-input" placeholder="Type to Search">
+    <div class="input-group-append">
+        <span class="input-group-text search-icon">
+            <i class="fas fa-search"></i>
+        </span>
+    </div>
+</div>
+
+<style>
+  #data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  #data-table th, #data-table td {
+    padding: 2px;
+    text-align: center;
+  }
+
+  #data-table th {
+    background-color: #343a40;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  #data-table tbody tr:hover {
+    background-color: #f5f5f5;
+  }
+
+  select {
+    padding: 8px;
+  }
+ 
+
+
+.status-button:focus {
+    outline: none; /* Remove focus outline */
+}
+
+
+</style>
+
+<div class="table-responsive">
+  <table id="data-table" class="table table-striped table-bordered table-hover">
+      <thead class="thead-dark">
+        <tr>
+          <th>NAME</th>
+          <th >PROVINCE</th>
+          <th>DISTRICT</th>
+          <th>DATE</th>
+          <th>PHONE</th>
+          <th>PURPOSE</th>
+          <th>VEHICLE</th>
+          <th>
+            STATUS
+            <select id="current_status-filter">
+              <option value="all">All</option>
+              <option value="Pass Issued">Pass Issued</option>
+              <option value="Entered">Entered</option>
+              <option value="Exited">Exited</option>
+            </select>
+          </th>
+          <th>
+            ISSUED BY
+            <select id="group-filter">
+                <option value="all">All</option>
+                {% if user_group_name == 'SUPERADMIN' or user_group_name == 'GATE ADMIN' %}
+                    {% for group in all_groups %}
+                        <option value="{{ group.name }}">{{ group.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="{{ user_group_name }}">{{ user_group_name }}</option>
+                {% endif %}
+            </select>
+        </th>
+        <th>
+          QUATER TO VISIT
+          <select id="office-filter">
+              <option value="all">All</option>
+              {% if user_group_name == 'SUPERADMIN' or user_group_name == 'GATE ADMIN' %}
+                  {% for group in all_groups %}
+                      {% if group.name != 'SUPERADMIN' and group.name != 'GATE ADMIN' and group.name != 'GUEST' %}
+                          <option value="{{ group.name }}">{{ group.name }}</option>
+                      {% endif %}
+                  {% endfor %}
+              {% else %}
+                  <option value="{{ user_group_name }}">{{ user_group_name }}</option>
+              {% endif %}
+          </select>
+      </th>
+      <script>
+        $(document).ready(function() {
+          $('#office-filter').on('change', function() {
+      
+              var selectedOffice = $(this).val();
+              
+              if (selectedOffice === 'all') {
+                  // Show all rows if "all" is selected
+                  $('table tbody tr').show();
+              } else {
+                  // Hide rows that don't match the selected office
+                  $('table tbody tr').each(function() {
+                      var itemOffice = $(this).find('.assigned_office').text(); // Get the office from the table cell
+                      if (itemOffice === selectedOffice) {
+                          $(this).show();
+                      } else {
+                          $(this).hide();
+                      }
+                  });
+              }
+          });
+      });
+      
+      </script>
+      
+        
+        
+        
+          
+          <th>ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data %}
+           {% with item.date as iso8601_formatted_date %}
+            {% comment %} <tr>
+              <td>ISO8601 Formatted Date: {{ iso8601_formatted_date }}</td>
+              <td>Current BS Date: {{ current_bs_date }}</td>
+          </tr>  {% endcomment %}
+                    {% if iso8601_formatted_date >= current_bs_date %}
+                        {% if user_group == 'GATE ADMIN' or user_group == 'SUPERADMIN' or user_group == item.group or user_group == item.assigned_office %}
+                            <tr class="{% if item.status == 'Entered' %}entered{% elif item.status == 'Exited' %}exited{% endif %}" 
+                                data-item-id="{{ item.id }}" data-item-group="{{ item.group }}">
+                                <td class="primary-key hidden" data-primary-key="{{ item.pk }}"></td>
+                                <td class="name">{{ item.name }}</td>
+                                <td class="province">{{ item.province }}</td>
+                                <td class="district">{{ item.district }}</td>
+                                <td class="date">{{ item.date }}</td>
+                                <td class="id-number">{{ item.id_number }}</td>
+                                <td class="purpose">
+                                  {% if item.other_purpose %}
+                                      {{ item.other_purpose }}
+                                  {% else %}
+                                      {{ item.purpose }}
+                                  {% endif %}
+                              </td>
+                                                              
+                              <td class="vehicle-number">
+                                    {% if item.has_vehicle %} 
+                                        {{ item.vehicle_number }}
+                                    {% else %}
+                                        No Vehicle Data
+                                    {% endif %}
+                                </td>
+                                <td data-status="{{ item.current_status }}" class="status">{{ item.current_status }}</td>
+                                <td class="group">{{ item.group }}</td> <!-- Display the user's group -->
+                                <td class="assigned_office">{{ item.assigned_office }}</td> <!-- Display the user's group -->
+
+                                <td>
+                                  <div class="status-container">
+                                    <button class="status-button" style="background-color: #2196F3; color: white; font-weight: bold;">
+                                      Enter <!-- Initial text inside the button -->
+                                      </button>
+                                  </div>
+                              </td>
+                              
+                              
+                                
+
+                                
+                                <td>
+                                  <a href="{% url 'detail_view' item.id %}">Detail</a>
+
+                                    {% comment %} <a href="#" class="detail-button" data-toggle="modal" data-target="#detailsModal{{ item.id }}">Detail</a>
+                                    <div class="modal fade" id="detailsModal{{ item.id }}" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel{{ item.id }}" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title text-center font-weight-bold" id="detailsModalLabel{{ item.id }}">Gate Pass Details</h5>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <!-- Date fields go here -->
+                                                    <p>Pass Issued by/पास जारी गर्ने: {{ item.group }}</p>
+                                                    <p>Name/नाम: {{ item.name }}</p>
+                                                    {% if item.additional_people_names %}
+                                                        <p>Additional People/अतिरिक्त व्यक्ति: {{ item.additional_people_names }}</p>
+                                                    {% endif %}
+                                                    <p>Province/प्रदेश: {{ item.province }}</p>
+                                                    <p>District/जिल्ला: {{ item.district }}</p>
+                                                    <p>Date/मिति: {{ item.date }}</p>
+                                                    <p>Phone/फोन: {{ item.id_number }}</p>
+                                                    <p>Purpose/उद्देश्य: {{ item.purpose }}</p>
+                                                    {% if item.has_vehicle %}
+                                                        <p>Vehicle Number/सवारी साधन: {{ item.vehicle_number }}</p>
+                                                    {% else %}
+                                                        <p>सवारी साधनको डेटा छैन</p>
+                                                    {% endif %}
+
+                                                    <p >Status/स्थिति: {{ item.status }}</p>
+
+                                                    
+                                                    <p>Date of Entry/प्रवेश मिति: {{ item.date_of_entry }}</p>
+
+                                                
+
+                                                    <p>Date of Exit: {{ item.date_of_exit }}</p>
+                                                </div>
+                                                <div class="text-center mt-4">
+                                                  <a href="{% url 'download_pdf' item.id %}" class="btn btn-secondary">
+                                                      Print PDF
+                                                  </a>
+                                              </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-primary close-modal" data-dismiss="modal">OK</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> {% endcomment %}
+                                </td>
+                                <script>
+                                  document.addEventListener('DOMContentLoaded', function () {
+                                    const current_bs_date = NepaliFunctions.GetCurrentBsDate('YYYY-MM-DD');
+                                    const searchInput = document.getElementById('searchInput');
+                                    const tableBody = document.querySelector('table tbody');
+                                    const rows = tableBody.getElementsByTagName('tr');
+                                
+                                    searchInput.addEventListener('input', function () {
+                                      const searchText = searchInput.value.toLowerCase();
+                                
+                                      for (const row of rows) {
+                                        let found = false;
+                                        const cells = row.getElementsByTagName('td');
+                                
+                                        for (const cell of cells) {
+                                          if (cell.textContent.toLowerCase().includes(searchText)) {
+                                            found = true;
+                                            break;
+                                          }
+                                        }
+                                
+                                        row.style.display = found ? '' : 'none';
+                                      }
+                                    });
+                                    
+                                    function getCookie(name) {
+                                      var value = "; " + document.cookie;
+                                      var parts = value.split("; " + name + "=");
+                                      if (parts.length === 2) return parts.pop().split(";").shift();
+                                  }
+                                
+                                  // Function to set the button state
+                                function setButtonState($button, status) {
+                                  const iconMappings = {
+                                      'Pass Issued': 'Enter',
+                                      'Entered': 'Exited',
+                                      'Exited': 'Exited',
+                                  };
+                                
+                                  const icon = iconMappings[status];
+                                  $button.html(icon);
+                                }
+                                
+                                // Function to handle button click
+                                function handleButtonClick($button, $statusCell, $entryTimeCell, $exitTimeCell, $row, primaryKey, status) {
+                                  // Load the color from local storage
+                                  const storedColor = localStorage.getItem(`${primaryKey}_color`) || 'blue'; // Default to blue
+                                  if (status === 'Exited') {
+                                      // Prevent button click when the status is "Exited"
+                                      return;
+                                  }
+                                
+                                  const now = new Date(); // Get the current time
+                                
+                                
+                                  if (status === 'Pass Issued') {
+                                      setButtonState($button, 'Entered', 'green');
+                                      $statusCell.text('Entered');
+                                      status = 'Entered';
+                                      $row.removeClass('gate-pass').addClass('entered');
+                                      $button.css('color', 'green'); // Set the color to green
+                                
+                                      
+                                
+                                      // Record and display the entry time
+                                      const entryTimeString = now.toLocaleTimeString();
+                                      $entryTimeCell.text(entryTimeString);
+                                      
+                                      $exitTimeCell.text(''); // Clear exit time*/
+                                  } else if (status === 'Entered') {
+                                      setButtonState($button, 'Exited', 'red');
+                                      $statusCell.text('Exited');
+                                      status = 'Exited';
+                                      $row.removeClass('entered').addClass('exited');
+                                      $button.css('color', 'red'); // Set the color to red
+                                      // Record and display the exit time
+                                      const entryTimeString = $entryTimeCell.text();
+                                      const exitTimeString = now.toLocaleTimeString();
+                                      $entryTimeCell.text(entryTimeString); // Preserve the entry time
+                                
+                                      $exitTimeCell.text(exitTimeString);
+                                  } else {
+                                      setButtonState($button, 'Pass Issued', 'blue');
+                                      $statusCell.text('Pass Issued');
+                                      status = 'Pass Issued';
+                                      $row.removeClass('exited').addClass('gate-pass');
+                                      $button.css('color', 'blue'); // Set the color to blue
+                                
+                                      // Clear the entry and exit times
+                                      $entryTimeCell.text('');
+                                      $exitTimeCell.text('');
+                                  }
+                                
+                                
+                                  // Save the status in local storage
+                                  localStorage.setItem(primaryKey, status);
+                                  localStorage.setItem(`${primaryKey}_color`, $button.css('color'));
+                                
+                                
+                                  $.ajax({
+                                      url: '/update_status/',  // URL endpoint to handle the status update
+                                      method: 'POST',
+                                      data: {
+                                          'primary_key': primaryKey,
+                                          'new_status': status
+                                      },
+                                      headers: {
+                                          'X-CSRFToken': getCookie('csrftoken')
+                                      },
+                                      success: function (response) {
+                                        if (response.success) {
+                                          const entryDate = response.entry_date || '';
+                                          const exitDate = response.exit_date || '';
+                                          
+                                          $entryTimeCell.text(entryDate);
+                                          $exitTimeCell.text(exitDate);
+              
+                                          updateDurationOfStay($row);
+                                      } else {
+                                          console.error('Failed to update status:', response.error);
+                                      }
+
+
+                                          // Handle the response from the server if needed
+                                      },
+                                      error: function (error) {
+                                          console.error('Error:', error);
+                                      }
+                                  });
+                                  updateEntryExitTimes($row, status);
+                                  updateDurationOfStay($row);
+                                }
+                                
+                                // Function to update entry and exit times
+                                function updateEntryExitTimes($row, status) {
+                                  const $entryTimeCell = $row.find('.entry-time');
+                                  const $exitTimeCell = $row.find('.exit-time');
+                                
+                                  if (status === 'Entered') {
+                                    const entryTime = new Date();
+                                    $entryTimeCell.text(entryTime.toLocaleString());
+                                  } else if (status === 'Exited') {
+                                    if ($entryTimeCell.text() === '') {
+                                      // Only set exit time if entry time is available
+                                      $exitTimeCell.text('');
+                                    } else {
+                                      const exitTime = new Date();
+                                      $exitTimeCell.text(exitTime.toLocaleString());
+                                    }
+                                  } else {
+                                    $entryTimeCell.text(''); // Clear entry time
+                                    $exitTimeCell.text(''); // Clear exit time
+                                  }
+                                }
+                                
+                                
+                                // Function to calculate and update the duration of stay
+                                function updateDurationOfStay($row) {
+                                  const $entryTime = $row.find('.entry-time');
+                                  const $exitTime = $row.find('.exit-time');
+                                  const $durationElement = $row.find('.duration-of-stay');
+                                
+                                  const entryTimeString = $entryTime.text();
+                                  const exitTimeString = $exitTime.text();
+                                
+                                  if (entryTimeString && exitTimeString) {
+                                    const entryTime = new Date(entryTimeString);
+                                    const exitTime = new Date(exitTimeString);
+                                    const duration = calculateDuration(entryTime, exitTime);
+                                
+                                    $durationElement.text(duration);
+                                  } else {
+                                    $durationElement.text('N/A'); // Display "N/A" if entry or exit time is missing
+                                  }
+                              }
+                              
+                              function calculateDuration(entryTime, exitTime) {
+                                  const durationMs = exitTime - entryTime;
+                              
+                                  // Convert milliseconds into hours
+                                  const hours = Math.ceil(durationMs / (1000 * 60 * 60));
+                              
+                                  return `${hours} hours`;
+                              }
+                              
+                              
+                                
+                                $('.status-button').each(function () {
+                                  const $button = $(this);
+                                  const $statusCell = $button.closest('tr').find('.status');
+                                  
+                                
+                                  const status = $statusCell.data('status');
+                                  const $row = $button.closest('tr');
+                                  const primaryKey = $row.find('.primary-key').data('primary-key');
+                                
+                                  // Define $entryTimeCell and $exitTimeCell here
+                                  const $entryTimeCell = $row.find('.entry-time');
+                                  const $exitTimeCell = $row.find('.exit-time');
+                                
+                                  // Additional code to get the item date
+                                  const itemDateText = $row.find('.date').text();
+                                  const itemDateParts = itemDateText.split('-');
+                                  const itemDate = new Date(`${itemDateParts[0]}-${itemDateParts[1]}-${itemDateParts[2]}`);
+                                  const formattedItemDate = formatDate(itemDate);
+                                
+                                  // Add console logs for debugging
+                                
+                                
+                                  //const itemDate = new Date(itemDateText);
+                                
+                                  // Get the saved status from local storage
+                                  const savedStatus = localStorage.getItem(primaryKey);
+                                
+                                  
+                                
+                                  if (savedStatus) {
+                                      // Use the saved status if available
+                                      setButtonState($button, savedStatus, savedStatus === 'Exited' ? 'red' : (savedStatus === 'Entered' ? 'green' : 'blue'));
+                                      $statusCell.text(savedStatus);
+                                      $row.removeClass('gate-pass entered exited').addClass(savedStatus.toLowerCase());
+                                
+                                      // Display entry and exit times if available
+                                      updateEntryExitTimes($row, savedStatus);
+                                
+                                    }
+                                
+                                  const storedColor = localStorage.getItem(`${primaryKey}_color`);
+                                        if (storedColor) {
+                                            $button.css('color', storedColor);
+                                        }
+                                
+                                        $button.hover(
+                                          function () {
+                                            const $icon = $button.find('i'); // Get the icon element
+                                            const iconClass = $icon.attr('class');
+                                            const buttonColor = $button.css('color');
+                                            if (iconClass.includes('fa-check-circle') ) {
+                                              $icon.attr('title', 'Enter');
+                                            } else if (iconClass.includes('fa-times-circle') ) {
+                                              $icon.attr('title', 'Exit');
+                                            } else if (iconClass.includes('fa-minus-circle') ) {
+                                              $icon.attr('title', 'Discard');
+                                            }
+                                          },
+                                          function () {
+                                            const $icon = $button.find('i'); // Get the icon element
+                                            $icon.attr('title', ''); // Clear the title on hover out
+                                          }
+                                        );
+                                
+                                        //Check if the current_bs_date is same as item.date
+                                        if (current_bs_date == formattedItemDate){
+                                          
+                                          $button.click(function (){
+                                            handleButtonClick($button, $statusCell, $entryTimeCell, $exitTimeCell, $row, primaryKey, status);
+                                            updateDurationOfStay($row);
+                                
+                                          });
+                                        } else{
+                                          // Display a message or disable the button if the dates are not the same
+                                          $button.attr('disabled', true); // Disable the button
+                                          $button.css('cursor', 'not-allowed'); // Change cursor style
+                                          $button.attr('title', 'Status can only be updated on the specified date.'); // Display a tooltip
+                                
+                                        }
+                                
+                                
+                                  
+                                
+                                });
+                                
+                                // Initial update of duration of stay
+                                $('table tbody tr').each(function () {
+                                  const $row = $(this);
+                                  updateDurationOfStay($row);
+                                });
+                                
+                                
+                                  });
+                                  </script>
+                                  
+                                <script>
+                                    $('.detail-button').on('click', function(event) {
+                                        event.preventDefault();
+                                        $(this).next('.modal').modal('show');
+                                    });
+                                    $('.close-modal').on('click', function() {
+                                        $(this).closest('.modal').modal('hide');
+                                    });
+                                </script>
+                                <td>
+                                    {% if user_group != 'GATE ADMIN' %}
+                                        {% if item.current_status == 'Pass Issued' %}
+                                            <a href="{% url 'edit_form_view' item.pk %}" class="edit-button">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
+                                        <a href="#" class="btn btn-link delete-item" data-item-id="{{ item.id }}" style="color: red;">
+                                            <i class="fas fa-trash-alt fa-sm"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                {% endwith %}
+        {% endfor %}
+    </tbody>
+    
+      {% comment %} <tbody>
+
+        {% for item in data %}
+          {% if item.date >= current_bs_date %}
+            {% if user_group == 'GATE ADMIN' or user_group == 'SUPERADMIN' or user_group == item.group %}
+              <tr class="{% if item.status == 'Entered' %}entered{% elif item.status == 'Exited' %}exited{% endif %}" 
+                  data-item-id="{{ item.id }}" data-item-group="{{ item.group }}">
+                <td class="primary-key hidden" data-primary-key="{{ item.pk }}"></td>
+                <td class="name">{{ item.name }}</td>
+                <td class="province">{{ item.province }}</td>
+                <td class="district">{{ item.district }}</td>
+                <td class="date">{{ item.date|nepali_date_format }}</td>
+                <td class="id-number">{{ item.id_number }}</td>
+                <td class="purpose">{{ item.purpose }}</td>
+                <td class="vehicle-number">
+                  {% if item.has_vehicle %}
+                    {{ item.vehicle_number }}
+                  {% else %}
+                    No Vehicle Data
+                  {% endif %}
+                </td>
+                <td data-status="{{ item.current_status }}" class="status">{{ item.current_status }}</td>
+                <td class="group">{{ item.group }}</td> <!-- Display the user's group -->
+                <td>
+                  <div class="status-container">
+                    <button class="status-button" style="background: transparent; border: none;">
+                      <i class="fas fa-check-circle fa-lg" style="color: blue;" title="Enter"></i>
+                    </button>
+                  </div>
+                </td>
+                <td>
+                  <a href="#" class="detail-button" data-toggle="modal" data-target="#detailsModal{{ item.id }}">Detail</a>
+                  <div class="modal fade" id="detailsModal{{ item.id }}" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel{{ item.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title text-center font-weight-bold" id="detailsModalLabel{{ item.id }}">Gate Pass Details</h5>
+                        </div>
+                        <div class="modal-body">
+                          <!-- Date fields go here -->
+                          <p>Name: {{ item.name }}</p>
+                          {% if item.additional_people_names %}
+                          <p>Additional People: {{ item.additional_people_names }}</p>
+                      {% endif %}                          <p>Province: {{ item.province }}</p>
+                          <p>District: {{ item.district }}</p>
+                          <p>Date: {{ item.date|nepali_date_format }}</p>
+                          <p>Phone: {{ item.id_number }}</p>
+                          <p>Purpose: {{ item.purpose }}</p>
+                          {% if item.has_vehicle %}
+                            <p>Vehicle Number: {{ item.vehicle_number }}</p>
+                          {% else %}
+                            <p>No Vehicle Data</p>
+                          {% endif %}
+                          <p>Status: {{ item.current_status }}</p>
+                          <p>Office: {{ item.group }}</p>
+                          <p>Date of Entry: {{ item.date_of_entry }}</p>
+                          <p>Date of Exit: {{ item.date_of_exit }}</p>
+                          <p>Duration of Stay: {{ item.duration_of_stay }}</p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-primary close-modal" data-dismiss="modal">OK</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <script>
+                  $('.detail-button').on('click', function(event) {
+                    event.preventDefault();
+                    $(this).next('.modal').modal('show');
+
+                  });
+                
+                  $('.close-modal').on('click', function() {
+                    $(this).closest('.modal').modal('hide');
+                  });
+                </script>
+                
+                <td>
+                  {% if user_group != 'GATE ADMIN' %}
+                    {% if item.current_status == 'Pass Issued' %}
+                      <a href="{% url 'edit_form_view' item.pk %}" class="edit-button">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                    {% endif %}
+                    <a href="#" class="btn btn-link delete-item" data-item-id="{{ item.id }}" style="color: red;">
+                      <i class="fas fa-trash-alt fa-sm"></i>
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </tbody>  {% endcomment %}
+    </table>
+  </div>
+  {% comment %} {% if user_group_name != "GATE ADMIN" %}
+<div style="margin-top: 20px;">
+    <button id="export-button">
+        <img src="{% load static %}{% get_media_prefix %}app_logos/excel.png" alt="Export Icon" class="button-icon">
+        Export to Excel
+    </button>
+</div>
+{% endif %} {% endcomment %}
+
+{% comment %} {% load static %} <!-- Ensure that this line is at the beginning of your template -->
+
+{% if user_group_name != "GATE ADMIN" %}
+<div style="margin-top: 20px;">
+    <a href="{% url 'export_filter' %}">
+        <img src="{% static 'app_logos/excel.png' %}" alt="Export Icon" class="button-icon">
+        Export to Excel
+    </a>
+</div>
+{% endif %} {% endcomment %}
+
+
+
+
+  
+</div>
+
+{% comment %} <style>
+  /* Custom CSS for table row and column styling */
+  .table tbody tr:hover {
+    background-color: #c0c0c0; /* Row color on hover */
+  }
+  .table tbody td {
+    color: #333; /* Text color for table cells */
+  }
+  .table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-width: 100%; /* Set a minimum width to prevent container collapse */
+  }
+  .table-container table {
+    width: 100%;  /* Use 100% width for the table to enable horizontal scrolling */
+  }
+  .name {
+    background-color: #ffcccc;
+  }
+  .province {
+    background-color: #c2f0c2;
+  }
+  .district {
+    background-color: #ffdb58;
+  }
+  .date {
+    background-color: #99ccff;
+  }
+  .id-number {
+    background-color: #ffaa80;
+  }
+  .purpose {
+    background-color: #e0e0e0;
+  }
+  .hidden {
+    display: none;
+  }
+  .vehicle-number {
+    background-color: #b5e7a0;
+  }
+  .status-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .status-button {
+    background-color: #3399ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px 20px; /* Adjust padding as needed */
+  }
+  .status-exit {
+    background-color: #3399ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px 20px; /* Adjust padding as needed */
+  }
+  .status-button.active {
+    background-color: #00ff00; /* Green color */
+  }
+</style> {% endcomment %}
+
+{% comment %} <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("export-button").addEventListener("click", function () {
+        // Collect the selected filter values
+        const statusFilter = document.getElementById("current_status-filter").value;
+        const officeFilter = document.getElementById("group-filter").value;
+
+        // Send the filter values to the server via an AJAX request
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", `/export-to-excel/?status=${statusFilter}&office=${officeFilter}`, true);
+        xhr.responseType = "blob"; // To receive a binary response
+        xhr.onload = function () {
+            if (this.status === 200) {
+                const blob = new Blob([this.response], { type: "application/ms-excel" });
+                const link = document.createElement("a");
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "exported_data.xlsx";
+                link.click();
+            }
+        };
+        xhr.send();
+    });
+});
+</script>
+  
+
+<script>
+  // Function to format date as "YYYY-MM-DD"
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+  document.addEventListener('DOMContentLoaded', function () {
+    const current_bs_date = NepaliFunctions.GetCurrentBsDate('YYYY-MM-DD');
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.querySelector('table tbody');
+    const rows = tableBody.getElementsByTagName('tr');
+
+    searchInput.addEventListener('input', function () {
+      const searchText = searchInput.value.toLowerCase();
+
+      for (const row of rows) {
+        let found = false;
+        const cells = row.getElementsByTagName('td');
+
+        for (const cell of cells) {
+          if (cell.textContent.toLowerCase().includes(searchText)) {
+            found = true;
+            break;
+          }
+        }
+
+        row.style.display = found ? '' : 'none';
+      }
+    });
+    
+    function getCookie(name) {
+      var value = "; " + document.cookie;
+      var parts = value.split("; " + name + "=");
+      if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  // Function to set the button state
+function setButtonState($button, status) {
+  const iconMappings = {
+      'Gate Pass': '<i class="fas fa-check-circle fa-lg"></i>',
+      'Entered': '<i class="fas fa-times-circle fa-lg"></i>',
+      'Exited': '<i class="fas fa-minus-circle fa-lg"></i>',
+  };
+
+  const icon = iconMappings[status];
+  $button.html(icon);
+}
+
+// Function to handle button click
+function handleButtonClick($button, $statusCell, $entryTimeCell, $exitTimeCell, $row, primaryKey, status) {
+  // Load the color from local storage
+  const storedColor = localStorage.getItem(`${primaryKey}_color`) || 'blue'; // Default to blue
+  if (status === 'Exited') {
+      // Prevent button click when the status is "Exited"
+      console.log('Button click prevented because the status is "Exited"');
+      return;
+  }
+
+  const now = new Date(); // Get the current time
+
+
+  if (status === 'Gate Pass') {
+      console.log('Changing to "Entered" state with a green icon');
+      setButtonState($button, 'Entered', 'green');
+      $statusCell.text('Entered');
+      status = 'Entered';
+      $row.removeClass('gate-pass').addClass('entered');
+      $button.css('color', 'green'); // Set the color to green
+
+      
+
+      // Record and display the entry time
+      /*const entryTimeString = now.toLocaleTimeString();
+      $entryTimeCell.text(entryTimeString);
+      
+      $exitTimeCell.text(''); // Clear exit time*/
+  } else if (status === 'Entered') {
+      console.log('Changing to "Exited" state with a red icon');
+      setButtonState($button, 'Exited', 'red');
+      $statusCell.text('Exited');
+      status = 'Exited';
+      $row.removeClass('entered').addClass('exited');
+      $button.css('color', 'red'); // Set the color to red
+      // Record and display the exit time
+     /* const entryTimeString = $entryTimeCell.text();
+      const exitTimeString = now.toLocaleTimeString();
+      $entryTimeCell.text(entryTimeString); // Preserve the entry time
+
+      $exitTimeCell.text(exitTimeString);*/
+  } else {
+      console.log('Changing back to "Gate Pass" state with a blue icon');
+      setButtonState($button, 'Gate Pass', 'blue');
+      $statusCell.text('Gate Pass');
+      status = 'Gate Pass';
+      $row.removeClass('exited').addClass('gate-pass');
+      $button.css('color', 'blue'); // Set the color to blue
+
+      // Clear the entry and exit times
+     /* $entryTimeCell.text('');
+      $exitTimeCell.text('');*/
+  }
+
+  console.log('Final Current Status:', status);
+
+  // Save the status in local storage
+  localStorage.setItem(primaryKey, status);
+  localStorage.setItem(`${primaryKey}_color`, $button.css('color'));
+
+
+  $.ajax({
+      url: '/update_status/',  // URL endpoint to handle the status update
+      method: 'POST',
+      data: {
+          'primary_key': primaryKey,
+          'new_status': status
+      },
+      headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+      },
+      success: function (response) {
+          // Handle the response from the server if needed
+      },
+      error: function (error) {
+          console.error('Error:', error);
+      }
+  });
+}
+
+// Function to update entry and exit times
+function updateEntryExitTimes($row, status) {
+  const $entryTimeCell = $row.find('.entry-time');
+  const $exitTimeCell = $row.find('.exit-time');
+
+  if (status === 'Entered') {
+    const entryTime = new Date();
+    $entryTimeCell.text(entryTime.toLocaleString());
+  } else if (status === 'Exited') {
+    if ($entryTimeCell.text() === '') {
+      // Only set exit time if entry time is available
+      $exitTimeCell.text('');
+    } else {
+      const exitTime = new Date();
+      $exitTimeCell.text(exitTime.toLocaleString());
+    }
+  } else {
+    $entryTimeCell.text(''); // Clear entry time
+    $exitTimeCell.text(''); // Clear exit time
+  }
+}
+
+
+// Function to calculate and update the duration of stay
+function updateDurationOfStay($row) {
+  const $entryTime = $row.find('.entry-time');
+  const $exitTime = $row.find('.exit-time');
+  const $durationElement = $row.find('.duration-of-stay');
+
+  const entryTimeString = $entryTime.text();
+  const exitTimeString = $exitTime.text();
+
+  if (entryTimeString && exitTimeString) {
+    const entryTime = new Date(entryTimeString);
+    const exitTime = new Date(exitTimeString);
+    const duration = calculateDuration(entryTime, exitTime);
+
+    $durationElement.text(duration);
+  } else {
+    $durationElement.text('N/A'); // Display "N/A" if entry or exit time is missing
+  }
+}
+
+// Function to calculate and return the duration of stay
+function calculateDuration(entryTime, exitTime) {
+  if (!entryTime || !exitTime) {
+    return 'N/A';
+  }
+
+  const durationMs = exitTime - entryTime;
+
+  // Calculate hours, minutes, and seconds
+  days, seconds = duration.days, duration.seconds
+  hours = days * 24 + seconds // 3600
+  minutes = (seconds % 3600) // 60
+  seconds = seconds % 60
+  //const hours = Math.floor(durationMs / 3600000);
+  //const minutes = Math.floor((durationMs % 3600000) / 60000);
+  //const seconds = Math.floor((durationMs % 60000) / 1000);
+
+  return `${days} days {hours} hours ${minutes} minutes ${seconds} seconds`;
+}
+
+
+$('.status-button').each(function () {
+  const $button = $(this);
+  const $statusCell = $button.closest('tr').find('.status');
+  
+
+  const status = $statusCell.data('status');
+  const $row = $button.closest('tr');
+  const primaryKey = $row.find('.primary-key').data('primary-key');
+
+  // Define $entryTimeCell and $exitTimeCell here
+  const $entryTimeCell = $row.find('.entry-time');
+  const $exitTimeCell = $row.find('.exit-time');
+
+  // Additional code to get the item date
+  const itemDateText = $row.find('.date').text();
+  const itemDateParts = itemDateText.split('/');
+  const itemDate = new Date(`${itemDateParts[0]}-${itemDateParts[1]}-${itemDateParts[2]}`);
+  const formattedItemDate = formatDate(itemDate);
+
+  // Add console logs for debugging
+  //console.log('Current BS Date:', current_bs_date);
+  //console.log('Item Date:', formattedItemDate);
+
+
+  //const itemDate = new Date(itemDateText);
+
+  // Get the saved status from local storage
+  const savedStatus = localStorage.getItem(primaryKey);
+
+  
+
+  if (savedStatus) {
+      // Use the saved status if available
+      setButtonState($button, savedStatus, savedStatus === 'Exited' ? 'red' : (savedStatus === 'Entered' ? 'green' : 'blue'));
+      $statusCell.text(savedStatus);
+      $row.removeClass('gate-pass entered exited').addClass(savedStatus.toLowerCase());
+
+      // Display entry and exit times if available
+      updateEntryExitTimes($row, savedStatus);
+
+    }
+
+  const storedColor = localStorage.getItem(`${primaryKey}_color`);
+        if (storedColor) {
+            $button.css('color', storedColor);
+        }
+
+        $button.hover(
+          function () {
+            const $icon = $button.find('i'); // Get the icon element
+            const iconClass = $icon.attr('class');
+            const buttonColor = $button.css('color');
+            if (iconClass.includes('fa-check-circle') ) {
+              $icon.attr('title', 'Enter');
+            } else if (iconClass.includes('fa-times-circle') ) {
+              $icon.attr('title', 'Exit');
+            } else if (iconClass.includes('fa-minus-circle') ) {
+              $icon.attr('title', 'Discard');
+            }
+          },
+          function () {
+            const $icon = $button.find('i'); // Get the icon element
+            $icon.attr('title', ''); // Clear the title on hover out
+          }
+        );
+
+        //Check if the current_bs_date is same as item.date
+        if (current_bs_date == formattedItemDate){
+          
+          $button.click(function (){
+            handleButtonClick($button, $statusCell, $entryTimeCell, $exitTimeCell, $row, primaryKey, status);
+            updateDurationOfStay($row);
+
+          });
+        } else{
+          // Display a message or disable the button if the dates are not the same
+          $button.attr('disabled', true); // Disable the button
+          $button.css('cursor', 'not-allowed'); // Change cursor style
+          $button.attr('title', 'Status can only be updated on the specified date.'); // Display a tooltip
+
+        }
+
+
+  
+
+});
+
+// Initial update of duration of stay
+$('table tbody tr').each(function () {
+  const $row = $(this);
+  updateDurationOfStay($row);
+});
+
+
+  });
+</script> 
+
+<script>
+  $(document).ready(function() {
+    $('.detail-button').click(function() {
+      const $row = $(this).closest('tr');
+      const $detailedData = $row.find('.detailed-data');
+
+      // Toggle the display of detailed data
+      $detailedData.toggle();
+    });
+  });
+</script>
+
+
+<script>
+  $(document).ready(function() {
+    $(".delete-item").click(function() {
+      var itemId = $(this).data("item-id");
+      var $row = $(this).closest("tr");
+
+      // Show a confirmation dialog
+      var confirmDelete = confirm("Are you sure you want to delete this item?");
+      
+      if (confirmDelete) {
+        // User clicked OK in the confirmation dialog
+        $.ajax({
+          url: '/delete-form/' + itemId + '/',  // Replace with your delete view URL
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          success: function() {
+            // Remove the row from the table on success
+            $row.remove();
+          },
+          error: function(error) {
+            console.error('Error:', error);
+          }
+        });
+      }
+    });
+
+    function getCookie(name) {
+      var value = "; " + document.cookie;
+      var parts = value.split("; " + name + "=");
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+  });
+</script>
+
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      if (row.classList.contains('exited')) {
+        const entryTime = row.querySelector('.entry-date').textContent;
+        const exitTime = row.querySelector('.exit-time').textContent;
+        
+        if (entryTime && exitTime) {
+          const entryTimestamp = new Date(entryTime).getTime();
+          const exitTimestamp = new Date(exitTime).getTime();
+          const timeDifference = (exitTimestamp - entryTimestamp) / 1000; // Time difference in seconds
+          const timeSpentCell = row.querySelector('.time-spent');
+          timeSpentCell.textContent = formatTimeDifference(timeDifference);
+        }
+      }
+
+       // Convert Gregorian date to Nepali date
+       const dateCell = row.querySelector('.date');
+       const gregorianDate = new Date(dateCell.textContent);
+       const nepaliDate = NepaliFunctions.ad2bs(gregorianDate.getFullYear(), gregorianDate.getMonth() + 1, gregorianDate.getDate());
+       const nepaliDateString = `${nepaliDate.bsYear}/${nepaliDate.bsMonth}/${nepaliDate.bsDate}`;
+       dateCell.textContent = nepaliDateString;
+
+
+    });
+  });
+</script>
+
+
+
+<script>
+  $(document).ready(function() {
+    $('#group-filter').on('change', function() {
+      var selectedGroup = $(this).val();
+      console.log('Selected Group:', selectedGroup);
+      if (selectedGroup === 'all') {
+        // Show all rows if "all" is selected
+        $('table tbody tr').show();
+      } else {
+          // Hide rows that don't match the selected group
+        $('table tbody tr').each(function() {
+          var itemGroup = $(this).find('.group').text(); // Get the group from the table cell
+          if (itemGroup === selectedGroup) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      }
+    });
+    $('#current_status-filter').on('change', function () {
+      var selectedStatus = $(this).val();
+      console.log('Selected Status:', selectedStatus);
+      if (selectedStatus === 'all') {
+        // Show all rows if "all" is selected
+        $('table tbody tr').show();
+      } else {
+        // Hide rows that don't match the selected status
+        $('table tbody tr').each(function () {
+          var itemStatus = $(this).find('.status').text();
+          if (itemStatus === selectedStatus) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      }
+    });
+  });
+</script> {% endcomment %}
+
+
+
+
+{% endblock %}
